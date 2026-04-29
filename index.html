@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>wt-fetch playground</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 700px;
+      margin: 40px auto;
+    }
+    textarea {
+      width: 100%;
+      height: 80px;
+    }
+    button {
+      margin-top: 10px;
+      padding: 8px 12px;
+    }
+    pre {
+      background: #111;
+      color: #0f0;
+      padding: 10px;
+      overflow: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>wt-fetch playground</h1>
+
+  <label>Request body (JSON):</label>
+  <textarea id="body">
+{ "message": "hello from client" }
+  </textarea>
+
+  <br />
+  <button id="send">Send via QUIC</button>
+
+  <h2>Response</h2>
+  <pre id="response"></pre>
+
+  <h2>History</h2>
+  <ul id="history"></ul>
+
+  <script type="module">
+    import { wtFetch } from "./wtFetch.js";
+
+    const btn = document.getElementById("send");
+    const bodyInput = document.getElementById("body");
+    const responseEl = document.getElementById("response");
+    const historyEl = document.getElementById("history");
+
+    btn.onclick = async () => {
+      responseEl.textContent = "Loading...";
+
+      let parsed;
+      try {
+        parsed = JSON.parse(bodyInput.value);
+      } catch (e) {
+        responseEl.textContent = "Invalid JSON";
+        return;
+      }
+
+      try {
+        const res = await wtFetch("/api/echo", {
+          method: "POST",
+          body: JSON.stringify(parsed)
+        });
+
+        const data = await res.json();
+
+        // afficher réponse
+        responseEl.textContent = JSON.stringify(data, null, 2);
+
+        // ajouter à l'historique
+        const li = document.createElement("li");
+        li.textContent = new Date().toLocaleTimeString() + " → " + JSON.stringify(data);
+        historyEl.prepend(li);
+
+      } catch (err) {
+        responseEl.textContent = "Error: " + err.message;
+      }
+    };
+  </script>
+
+</body>
+</html>
